@@ -20,7 +20,7 @@ jobs:
     - name: Setup .NET SDK
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: '6.x'  # Specify your .NET version here
+        dotnet-version: '7.x'  # Specify your .NET version here
 
     # Restore NuGet packages for all solutions
     - name: Restore NuGet packages
@@ -54,6 +54,7 @@ jobs:
 
     # Bump version
     - name: Bump version
+      id: bump_version
       run: |
         versionFile="version.txt"
         if [ ! -f "$versionFile" ]; then
@@ -63,6 +64,7 @@ jobs:
         IFS='.' read -r -a versionParts <<< "$currentVersion"
         newVersion="${versionParts[0]}.${versionParts[1]}.$((versionParts[2]+1))"
         echo "$newVersion" > "$versionFile"
+        echo "new_version=$newVersion" >> $GITHUB_ENV
         echo "New version: $newVersion"
       shell: bash
 
@@ -75,18 +77,18 @@ jobs:
 
     # Create a GitHub Release
     - name: Create GitHub Release
+      id: create_release
       uses: actions/create-release@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        tag_name: v${{ steps.bump-version.outputs.new_version }}
-        release_name: Release ${{ steps.bump-version.outputs.new_version }}
+        tag_name: v${{ env.new_version }}
+        release_name: Release ${{ env.new_version }}
         body: |
           ## Changes
-          - Automated release for version ${{ steps.bump-version.outputs.new_version }}
+          - Automated release for version ${{ env.new_version }}
         draft: false
         prerelease: false
-        generate_release_notes: true
 
     # Upload Release Assets
     - name: Upload Release Assets
@@ -94,7 +96,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        upload_url: ${{ steps.create-release.outputs.upload_url }}
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
         asset_path: ./publish/Release
         asset_name: published-app-Release
         asset_content_type: application/zip
