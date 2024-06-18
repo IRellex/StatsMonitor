@@ -29,7 +29,9 @@ jobs:
     # Restore NuGet packages for all solutions
     - name: Restore NuGet packages
       run: |
+        IFS=$'\n'
         for solution in $(find "$PWD" -name '*.sln'); do
+          echo "Restoring NuGet packages for solution: $solution"
           dotnet restore "$solution"
         done
       shell: bash
@@ -37,7 +39,9 @@ jobs:
     # Build all solutions
     - name: Build solutions
       run: |
+        IFS=$'\n'
         for solution in $(find "$PWD" -name '*.sln'); do
+          echo "Building solution: $solution"
           dotnet build "$solution" --configuration ${{ matrix.configuration }} --no-restore
         done
       shell: bash
@@ -45,8 +49,10 @@ jobs:
     # Publish all solutions
     - name: Publish solutions
       run: |
+        IFS=$'\n'
         for solution in $(find "$PWD" -name '*.sln'); do
-          dotnet publish "$solution" --configuration ${{ matrix.configuration }} --no-restore --output ./publish/${{ matrix.configuration }}/$(basename "$solution" .sln)
+          echo "Publishing solution: $solution"
+          dotnet publish "$solution" --configuration ${{ matrix.configuration }} --no-restore --output "./publish/${{ matrix.configuration }}/$(basename "$solution" .sln)"
         done
       shell: bash
 
