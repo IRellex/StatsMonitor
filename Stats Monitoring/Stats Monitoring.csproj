@@ -1,0 +1,27 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net6.0-windows</TargetFramework>
+    <RootNamespace>Stats_Monitoring</RootNamespace>
+    <Nullable>enable</Nullable>
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="LibreHardwareMonitorLib" Version="0.9.3" />
+    <PackageReference Include="MahApps.Metro" Version="2.4.10" />
+    <PackageReference Include="MahApps.Metro.IconPacks" Version="5.0.0" />
+    <PackageReference Include="Unity" Version="5.11.10" />
+    <PackageReference Include="XamlRadialProgressBar" Version="1.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Domain\" />
+    <Folder Include="Utility\" />
+    <Folder Include="Widgets\" />
+    <Folder Include="View\" />
+    <Folder Include="ViewModel\" />
+  </ItemGroup>
+
+</Project>
