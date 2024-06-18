@@ -20,14 +20,16 @@ jobs:
       with:
         fetch-depth: 0
 
+    # Install the .NET SDK
     - name: Setup .NET SDK
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: '6.x'  # Specify your .NET version here
+        dotnet-version: '7.x'  # Specify your .NET version here
 
+    # Restore NuGet packages for all solutions
     - name: Restore NuGet packages
       run: |
-        for solution in $(find . -name '*.sln'); do
+        for solution in $(find "$PWD" -name '*.sln'); do
           dotnet restore "$solution"
         done
       shell: bash
@@ -35,7 +37,7 @@ jobs:
     # Build all solutions
     - name: Build solutions
       run: |
-        for solution in $(find . -name '*.sln'); do
+        for solution in $(find "$PWD" -name '*.sln'); do
           dotnet build "$solution" --configuration ${{ matrix.configuration }} --no-restore
         done
       shell: bash
@@ -43,8 +45,8 @@ jobs:
     # Publish all solutions
     - name: Publish solutions
       run: |
-        for solution in $(find . -name '*.sln'); do
-          dotnet publish "$solution" --configuration ${{ matrix.configuration }} --no-restore --output ./publish/${{ matrix.configuration }}
+        for solution in $(find "$PWD" -name '*.sln'); do
+          dotnet publish "$solution" --configuration ${{ matrix.configuration }} --no-restore --output ./publish/${{ matrix.configuration }}/$(basename "$solution" .sln)
         done
       shell: bash
 
