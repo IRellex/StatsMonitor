@@ -8,10 +8,6 @@ on:
 
 jobs:
   build:
-    strategy:
-      matrix:
-        configuration: [Debug, Release]
-
     runs-on: windows-latest
 
     steps:
@@ -24,7 +20,7 @@ jobs:
     - name: Setup .NET SDK
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: '7.x'  # Specify your .NET version here
+        dotnet-version: '6.x'  # Specify your .NET version here
 
     # Restore NuGet packages for all solutions
     - name: Restore NuGet packages
@@ -42,7 +38,7 @@ jobs:
         IFS=$'\n'
         for solution in $(find "$PWD" -name '*.sln'); do
           echo "Building solution: $solution"
-          dotnet build "$solution" --configuration ${{ matrix.configuration }} --no-restore
+          dotnet build "$solution" --configuration Release --no-restore
         done
       shell: bash
 
@@ -52,13 +48,53 @@ jobs:
         IFS=$'\n'
         for solution in $(find "$PWD" -name '*.sln'); do
           echo "Publishing solution: $solution"
-          dotnet publish "$solution" --configuration ${{ matrix.configuration }} --no-restore --output "./publish/${{ matrix.configuration }}/$(basename "$solution" .sln)"
+          dotnet publish "$solution" --configuration Release --no-restore --output "./publish/Release/$(basename "$solution" .sln)"
         done
+      shell: bash
+
+    # Bump version
+    - name: Bump version
+      run: |
+        versionFile="version.txt"
+        if [ ! -f "$versionFile" ]; then
+          echo "1.0.0" > "$versionFile"
+        fi
+        currentVersion=$(cat "$versionFile")
+        IFS='.' read -r -a versionParts <<< "$currentVersion"
+        newVersion="${versionParts[0]}.${versionParts[1]}.$((versionParts[2]+1))"
+        echo "$newVersion" > "$versionFile"
+        echo "New version: $newVersion"
       shell: bash
 
     # Upload build artifacts
     - name: Upload build artifacts
       uses: actions/upload-artifact@v3
       with:
-        name: published-app-${{ matrix.configuration }}
-        path: ./publish/${{ matrix.configuration }}
+        name: published-app-Release
+        path: ./publish/Release
+
+    # Create a GitHub Release
+    - name: Create GitHub Release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v${{ steps.bump-version.outputs.new_version }}
+        release_name: Release ${{ steps.bump-version.outputs.new_version }}
+        body: |
+          ## Changes
+          - Automated release for version ${{ steps.bump-version.outputs.new_version }}
+        draft: false
+        prerelease: false
+        generate_release_notes: true
+
+    # Upload Release Assets
+    - name: Upload Release Assets
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create-release.outputs.upload_url }}
+        asset_path: ./publish/Release
+        asset_name: published-app-Release
+        asset_content_type: application/zip
